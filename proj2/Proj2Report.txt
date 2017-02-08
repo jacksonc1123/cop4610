@@ -1,0 +1,124 @@
+===========================================================
+Problem Statement:
+===========================================================
+The goal of this project is to become familiar with system calls, kernel programming, concurrency, and synchronization in the kernel. 
+
+===========================================================
+Steps taken to solve problem:
+===========================================================
+1. Created an empty program in order to see how many system calls was being called
+2. Created a small c program that called 10 system calls more than the empty programming
+3. Wrote a kernel module my_xtime that calls current_kernel_time()
+4. Learned how to load and unload a kernel module
+5. Learned how to create a proc file for the module to write to
+6. Created a kernel module called elevator that could write to a proc file
+7. Implemented a linked list that can take in structs and traverse through the data
+8. Implemented an elevator scheduler to handle the system calls
+9. Implemented threading and locking to ensure that the system doesn't crash and to make sure that all the passengers will get taken care of
+
+============================================================
+Assumptions:
+============================================================
+The elevator module must be able to execute an arbitrary number of consumers and producers for 5 minutes
+
+=============================================================
+System Calls:
+=============================================================
+-linux/kernel.h : snprintf
+-linux/init.h : module headers
+-linux/module.h : module headers
+-linux/proc_fs.h : proc file functions
+-linux/slab.h : kmalloc() kfree()
+-linux/string.h : string functions
+-linux/list.h : linked list functionality
+-linux/kthread.h : threading
+-linux/delay.h : sleeping and scheduling
+-linux/printk.h : print to kernel
+-linux/mutex.h : mutual exclusion for threads
+-asm-generic/uaccess.h : user space memory access
+-syscalls.h : sytem calls
+-int start(char *newstate) : initialize elevator
+-int stop(char *newstate) : stops elevator
+-char *get_state(void) : returns state of elevator
+-long process_request(int passenger_type, int start_floor, int destination_floor) : gives system calls access to the waiting list
+-static int service_requests(void *name) : puts requests into the waiting list
+-static int elevator_run(void *name) :  runs elevator, manages changing floors, and moving passengers from the waiting list to the riding list
+-static int elevator_open(struct inode *sp_inode, struct file *sp_file) : initializes proc file
+-static ssize_t elevator_read(struct file *sp_file, char_user *buf, size_t size, loff_t *offset) : prints data to the proc file when the proc file is read
+-static int elevator_release(struct inode *sp_inode, struct file *sp_file) : remove the proc file when the read is done
+-static int elevator_init(void) : initializes the module
+-static void elevator_exit(void) : removes processes of the module and frees all memory
+
+==============================================================
+Problems:
+==============================================================
+-Had to constantly restart the computer anytime the kernel crashed
+-Implementing the linked list was tricky
+-Deleting members of the linked list crashed our kernel
+-Figuring out where to initialize variables
+
+==============================================================
+Known Bugs:
+==============================================================
+Kernel bug that says object is already freed while running Part 3
+
+===============================================================
+Division of Labor:
+===============================================================
+Cameron Jackson
+- Part 1
+- Part 2
+- Part 3
+
+Christian Baez
+-Part 1
+-Part 2
+-Part 3
+
+Michael Garcia-Rivas
+-Part 1
+-Part 2
+-Part 3
+
+=================================================================
+Slack Days Used:
+=================================================================
+1 days for Cameron Jackson
+1 days for Christian Baez
+1 days for Michael Garcia-Rivas
+
+==================================================================
+Log
+==================================================================
+11/3/15 
+-  Project completed
+
+11/2/15
+- Part 3: Finalized the loading and unloading functionality of the elevator
+- Part 3: Printed the waiting load and amount of people serviced per floor
+
+11/1/15
+- Part 3: Worked on linked list, threading, and elevator scheduler
+
+10/31/15
+- Part 3: Worked on implementing the linked list, and communicating with the system calls
+
+10/30/15
+- Part 3: Researched using and implementing a linked list in the kernel
+
+10/22/15
+- Part 3: Initialized the kernel module, made sure we could add and remove it
+- Part 3: Added our structs and other variables and globals we would need to use
+
+10/18/15
+- Part 2: Completed this part, my_xtime.c runs correctly
+
+10/16/15
+- Part 2: Researched implementing a module that can write to a proc file
+
+10/14/15
+- Part 1: Implemented an empty program and determined how many system calls it called
+- Part 1: Implemented a small program that added 10 more system calls than the empty program
+
+9/25/15
+- Project assigned 

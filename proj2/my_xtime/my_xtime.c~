@@ -1,0 +1,100 @@
+/* my_xtime.c */
+#include <linux/kernel.h>
+#include <linux/init.h>
+#include <linux/module.h>
+#include <linux/proc_fs.h>
+#include <linux/slab.h>
+#include <linux/string.h>
+#include <asm-generic/uaccess.h>
+
+MODULE_LICENSE("Dual BSD/GPL");
+
+#define ENTRY_NAME "timed"
+#define PERMS 0644
+#define PARENT NULL
+
+static struct file_operations fops;
+static struct timespec oldtime, newtime;
+
+static char* currtime;
+static char* eltime;
+static int read_p;
+static int readonce = 0;
+
+static int my_xtime_open(struct inode *sp_inode, struct file *sp_file) {
+  printk("my_xtime called open\n");
+  read_p = 1;
+  /* allocate memory for timed messages */
+  currtime = kmalloc(sizeof(char)*100, __GFP_WAIT | __GFP_IO | __GFP_FS);
+  eltime = kmalloc(sizeof(char)*100, __GFP_WAIT | __GFP_IO | __GFP_FS);
+  if (currtime == NULL) {
+    printk("ERROR, my_xtime_open\n");
+    return -ENOMEM;
+  }
+  else if (eltime == NULL) {
+    printk("ERROR, my_xtime_open\n");
+    return -ENOMEM;
+  }
+  /* strcpy(currtime, "current time: "); */
+  /* strcpy(eltime, "elapsed time: "); */
+  return 0;
+}
+
+static ssize_t my_xtime_read(struct file *sp_file, char __user *buf, size_t size, loff_t *offset) {
+  int len1, len2;
+
+  read_p = !read_p;
+  if (read_p) {
+    return 0;
+  }
+  oldtime = newtime;
+  newtime = current_kernel_time();
+  printk("current time: %ld\n", newtime.tv_sec);
+  snprintf(currtime, 100, "current time: %ld\n", newtime.tv_sec);
+  len1 = strlen(currtime);
+  copy_to_user(buf, currtime, len1);
+  if (readonce == 0)
+    readonce = 1;
+  else
+  {
+    printk("elapsed time: %ld\n", (newtime.tv_sec - oldtime.tv_sec));
+    snprintf(eltime, 100, "current time: %ld\nelapsed time: %ld\n", 
+	     newtime.tv_sec, (newtime.tv_sec - oldtime.tv_sec));
+    len2 = strlen(eltime);
+    copy_to_user(buf, eltime, len2);
+    return len1+len2;
+  }
+  return len1;
+}
+
+static int my_xtime_release(struct inode *sp_inode, struct file *sp_file) {
+  printk("my_xtime called release\n");
+  kfree(currtime);
+  kfree(eltime);
+  return 0;
+}
+
+static int my_xtime_init(void) {
+  printk("/proc/%s created\n", ENTRY_NAME);
+  fops.open = my_xtime_open;
+  fops.read = my_xtime_read;
+  fops.release = my_xtime_release;
+
+  if (!proc_create(ENTRY_NAME,PERMS,NULL,&fops))
+  {
+    printk("ERROR! proc_create\n");
+    remove_proc_entry(ENTRY_NAME,NULL);
+    return -ENOMEM;
+  }
+  return 0;
+}
+
+static void my_xtime_exit(void) {
+  remove_proc_entry(ENTRY_NAME,NULL);
+  printk("/proc/%s removed\n", ENTRY_NAME);
+}
+
+/* module_init(hello_init); */
+/* module_exit(hello_exit); */
+module_init(my_xtime_init);
+module_exit(my_xtime_exit);
